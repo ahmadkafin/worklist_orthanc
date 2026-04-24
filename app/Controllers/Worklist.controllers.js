@@ -1,48 +1,77 @@
 import { configDotenv } from "dotenv";
-import fs, { access } from "fs";
+import fs from "fs";
 import path from "path";
-import dcmjs from 'dcmjs';
+import dcmjs from "dcmjs";
+
 configDotenv();
+
+const { DicomMetaDictionary, DicomDict } = dcmjs.data;
 
 export const makeWorklist = (req, res) => {
     try {
         const { patientName, patientID, accessionNumber, parameter } = req.body;
+
+        // Generate UIDs
+        const sopInstanceUID = DicomMetaDictionary.uid();
+        const sopClassUID = "1.2.840.10008.5.1.4.31"; // MWL SOP Class
+
+        // Dataset untuk worklist
         const dataset = {
+            SpecificCharacterSet: "ISO_IR 100",
             PatientName: patientName,
             PatientID: patientID,
             AccessionNumber: accessionNumber,
             Modality: "CR",
+            SOPClassUID: sopClassUID,
+            SOPInstanceUID: sopInstanceUID,
             ScheduledProcedureStepSequence: [
                 {
                     ScheduledStationAETitle: "DRXR004277",
                     ScheduledProcedureStepDescription: parameter,
                     Modality: "CR",
-                    ScheduledProcedureStepStartDate: new Date().toISOString().split('T')[0].replace(/-/g, ''),
-                    ScheduledProcedureStepStartTime: '080000'
-                }
-            ]
-        }
-        const denaturalized = dcmjs.data.DicomMetaDictionary.denaturalizeDataset(dataset);
-        const dicomDict = new dcmjs.data.DicomDict({
-            FileMetaInformationVersion: new Uint8Array([0, 1]).buffer,
-            MediaStorageSOPClassUID: "1.2.840.10008.5.1.4.31",
-            MediaStorageSOPInstanceUID: dcmjs.data.DicomMetaDictionary.uid(),
-            TransferSyntaxUID: "1.2.840.10008.1.2.1",
-            ImplementationClassUID: dcmjs.data.DicomMetaDictionary.uid(),
+                    ScheduledProcedureStepStartDate: new Date()
+                        .toISOString()
+                        .split("T")[0]
+                        .replace(/-/g, ""),
+                    ScheduledProcedureStepStartTime: "080000",
+                },
+            ],
+        };
+
+        // Buat DicomDict dengan meta header yang benar
+        const dicomDict = new DicomDict({});
+
+        // Set meta information
+        dicomDict.meta = DicomMetaDictionary.denaturalizeDataset({
+            FileMetaInformationVersion: new Uint8Array([0, 1]),
+            MediaStorageSOPClassUID: sopClassUID,
+            MediaStorageSOPInstanceUID: sopInstanceUID,
+            TransferSyntaxUID: "1.2.840.10008.1.2.1", // Explicit VR Little Endian
+            ImplementationClassUID: "1.2.276.0.7230010.3.0.3.6.6",
+            ImplementationVersionName: "DCMJS_WORKLIST",
         });
 
-        dicomDict.dict = denaturalized;
+        // Set dataset
+        dicomDict.dict = DicomMetaDictionary.denaturalizeDataset(dataset);
 
         const buffer = Buffer.from(dicomDict.write());
         const fileName = `${accessionNumber}.wl`;
-        const WORKLIST_DIR = process.env.WORKLISTDIR || path.join(__dirname, '../../worklists');
-        // const WORKLIST_DIR = process.env.WORKLIST_PATH;
+        const WORKLIST_DIR =
+            process.env.WORKLISTDIR || path.join(__dirname, "../../worklists");
+
+        // Pastikan direktori ada
+        if (!fs.existsSync(WORKLIST_DIR)) {
+            fs.mkdirSync(WORKLIST_DIR, { recursive: true });
+        }
 
         fs.writeFileSync(path.join(WORKLIST_DIR, fileName), buffer);
-        res.status(200).json({ status: 'success', message: 'Worklist generated successfully' });
-
+        res
+            .status(200)
+            .json({ status: "success", message: "Worklist generated successfully" });
     } catch (e) {
-        console.error(e);
-        res.status(500).json({ message: "Error generating DICOM file" });
+        console.error("Error generating worklist:", e);
+        res
+            .status(500)
+            .json({ message: "Error generating DICOM file", error: e.message });
     }
-}
+};
