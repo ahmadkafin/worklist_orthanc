@@ -1,0 +1,21 @@
+{
+  "name": "orthanpacs_gateway",
+  "version": "1.0.0",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "ahmadkafin",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dcmjs": "^0.50.1",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "path": "^0.12.7",
+    "sequelize": "^6.37.8"
+  }
+}
