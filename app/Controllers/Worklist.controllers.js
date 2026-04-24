@@ -26,7 +26,7 @@ export const makeWorklist = (req, res) => {
             SOPInstanceUID: sopInstanceUID,
             ScheduledProcedureStepSequence: [
                 {
-                    ScheduledStationAETitle: "DRXR004277",
+                    ScheduledStationAETitle: "ORTHANCPACS",
                     ScheduledProcedureStepDescription: parameter,
                     Modality: "CR",
                     ScheduledProcedureStepStartDate: new Date()
