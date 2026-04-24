@@ -65,10 +65,10 @@ export const makeWorklist = (req, res) => {
 
         // Pastikan direktori ada
         if (!fs.existsSync(WORKLIST_DIR)) {
-            fs.mkdirSync(WORKLIST_DIR, { recursive: true });
+            fs.mkdirSync(WORKLIST_DIR, { recursive: true, mode: 0o755 });
         }
 
-        fs.writeFileSync(path.join(WORKLIST_DIR, fileName), buffer);
+        fs.writeFileSync(path.join(WORKLIST_DIR, fileName), buffer, { mode: 0o644 });
         res
             .status(200)
             .json({ status: "success", message: "Worklist generated successfully" });
