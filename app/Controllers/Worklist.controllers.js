@@ -37,7 +37,7 @@ export const makeWorklist = (req, res) => {
                         .toISOString()
                         .split("T")[0]
                         .replace(/-/g, ""),
-                    ScheduledProcedureStepStartTime: "080000",
+                    ScheduledProcedureStepStartTime: "100000",
                 },
             ],
         };
