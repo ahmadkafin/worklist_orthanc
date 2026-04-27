@@ -21,18 +21,18 @@ export const makeWorklist = (req, res) => {
             PatientName: patientName,
             PatientID: patientID,
             AccessionNumber: accessionNumber,
-            Modality: "US",
+            Modality: "PX",
             SOPClassUID: sopClassUID,
             SOPInstanceUID: sopInstanceUID,
             ScheduledProcedureStepSequence: [
                 {
-                    ScheduledStationAETitle: "mindray",
+                    ScheduledStationAETitle: "CS8100",
                     ScheduledProcedureStepDescription: parameter,
                     ScheduledPerformingPhysicianName: "TEST^DOC",
                     ScheduledProcedureStepID: "1",
                     StudyInstanceUID: DicomMetaDictionary.uid(),
                     RequestedProcedureID: accessionNumber,
-                    Modality: "US",
+                    Modality: "PX",
                     ScheduledProcedureStepStartDate: new Date()
                         .toISOString()
                         .split("T")[0]
