@@ -9,7 +9,7 @@ const { DicomMetaDictionary, DicomDict } = dcmjs.data;
 
 export const makeWorklist = (req, res) => {
     try {
-        const { patientName, patientID, accessionNumber, parameter } = req.body;
+        const { patientName, patientID, accessionNumber, parameter, modality, aetitle, sex, birthdate } = req.body;
 
         // Generate UIDs
         const sopInstanceUID = DicomMetaDictionary.uid();
@@ -21,18 +21,20 @@ export const makeWorklist = (req, res) => {
             PatientName: patientName,
             PatientID: patientID,
             AccessionNumber: accessionNumber,
-            Modality: "DX",
+            PatientBirthDate: birthdate,
+            PatientSex: sex,
+            Modality: modality,
             SOPClassUID: sopClassUID,
             SOPInstanceUID: sopInstanceUID,
             ScheduledProcedureStepSequence: [
                 {
-                    ScheduledStationAETitle: "TROPHY_DICOM",
+                    ScheduledStationAETitle: aetitle,
                     ScheduledProcedureStepDescription: parameter,
                     ScheduledPerformingPhysicianName: "TEST^DOC",
                     ScheduledProcedureStepID: "1",
                     StudyInstanceUID: DicomMetaDictionary.uid(),
                     RequestedProcedureID: accessionNumber,
-                    Modality: "DX",
+                    Modality: modality,
                     ScheduledProcedureStepStartDate: new Date()
                         .toISOString()
                         .split("T")[0]
