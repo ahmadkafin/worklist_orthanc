@@ -21,7 +21,7 @@ export const makeWorklist = (req, res) => {
             PatientName: patientName,
             PatientID: patientID,
             AccessionNumber: accessionNumber,
-            Modality: "PX",
+            Modality: "DX",
             SOPClassUID: sopClassUID,
             SOPInstanceUID: sopInstanceUID,
             ScheduledProcedureStepSequence: [
@@ -32,7 +32,7 @@ export const makeWorklist = (req, res) => {
                     ScheduledProcedureStepID: "1",
                     StudyInstanceUID: DicomMetaDictionary.uid(),
                     RequestedProcedureID: accessionNumber,
-                    Modality: "PX",
+                    Modality: "DX",
                     ScheduledProcedureStepStartDate: new Date()
                         .toISOString()
                         .split("T")[0]
