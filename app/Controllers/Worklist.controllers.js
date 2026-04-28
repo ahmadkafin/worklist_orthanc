@@ -18,9 +18,9 @@ export const makeWorklist = (req, res) => {
         // Dataset untuk worklist
         const dataset = {
             SpecificCharacterSet: "ISO_IR 100",
-            PatientName: patientName,
-            PatientID: patientID,
-            AccessionNumber: accessionNumber,
+            PatientName: patientName.trim(),
+            PatientID: patientID.trim(),
+            AccessionNumber: accessionNumber.trim(),
             PatientBirthDate: birthdate,
             PatientSex: sex,
             Modality: modality,
@@ -31,9 +31,9 @@ export const makeWorklist = (req, res) => {
                     ScheduledStationAETitle: aetitle,
                     ScheduledProcedureStepDescription: parameter,
                     ScheduledPerformingPhysicianName: "TEST^DOC",
-                    ScheduledProcedureStepID: "1",
+                    ScheduledProcedureStepID: "1".trim(),
                     StudyInstanceUID: DicomMetaDictionary.uid(),
-                    RequestedProcedureID: accessionNumber,
+                    RequestedProcedureID: accessionNumber.trim(),
                     Modality: modality,
                     ScheduledProcedureStepStartDate: new Date()
                         .toISOString()
