@@ -3,7 +3,7 @@ configDotenv();
 
 export default {
     HOST: process.env.PGHOST,
-    USER: process.env.PGUSER,
+    USER: process.env.PGUSERNAME,
     PASSWORD: process.env.PGPASS,
     DB: process.env.PGDB,
     PORT: process.env.PGPORT,

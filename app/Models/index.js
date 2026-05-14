@@ -18,13 +18,22 @@ const sequelize = new Sequelize(
         schemas: dbConnecttion.SCHEMA,
     }
 )
-
 const db = {}
+
+const models = {
+    Modality: Modality(sequelize, Sequelize),
+    Parameters: Parameters(sequelize, Sequelize),
+    Worklists: Worklists(sequelize, Sequelize),
+}
+
+Object.values(models)
+    .filter(model => typeof model.associate === "function")
+    .forEach(model => model.associate(models))
+
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
-db.Modality = Modality(sequelize, Sequelize);
-db.Parameters = Parameters(sequelize, Sequelize);
-db.Worklist = Worklists(sequelize, Sequelize);
+Object.assign(db, models);
+
 
 export default db;

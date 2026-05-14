@@ -14,7 +14,7 @@ const Parameters = (seqeuelize, DataTypes) => {
                 key: 'uuid'
             }
         },
-        group: {
+        parameter_group: {
             type: DataTypes.STRING,
             allowNull: false,
         },
@@ -33,13 +33,13 @@ const Parameters = (seqeuelize, DataTypes) => {
             }
         ]
     });
-    Model.associate = (model) => {
+    Model.associate = (models) => {
         Model.belongsTo(models.Modality, {
             foreignKey: 'modality_uid',
             as: 'modality'
         });
 
-        Model.hasMany(model.Worklist, {
+        Model.hasMany(models.Worklists, {
             foreignKey: 'parameter_uid'
         });
     }

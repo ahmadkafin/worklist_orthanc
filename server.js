@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import Routes from "./app/Routes/index.js";
+import db from "./app/Models/index.js";
 
 configDotenv();
 
@@ -15,6 +16,14 @@ app.use(express.urlencoded({ extended: true }));
 
 Routes(app);
 try {
+    if (process.env.APP_ENV === "DEV") {
+        await db.sequelize.sync({ alter: true });
+        console.log('DB SYNC ON DEV SUCCESS');
+    } else {
+        await db.sequelize.authenticate();
+        console.log('DB SYNC ON PROD SUCCESS');
+    }
+
     app.listen(PORT, () => {
         console.log(`Server is running on PORT : ${PORT}`)
     })

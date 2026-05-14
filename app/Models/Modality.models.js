@@ -28,12 +28,13 @@ const Modality = (sequelize, DataTypes) => {
             }
         ]
     })
-    Model.associate = (model) => {
+    Model.associate = (models) => {
         Model.hasMany(models.Parameters, {
             foreignKey: 'modality_uid',
             as: 'parameters'
         })
     }
+    return Model;
 }
 
 export default Modality;
