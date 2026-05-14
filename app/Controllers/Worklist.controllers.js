@@ -3,6 +3,10 @@ import fs from "fs";
 import path from "path";
 import dcmjs from "dcmjs";
 import db from "../Models/index.js";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const Modality = db.Modality;
 const Parameters = db.Parameters;
@@ -16,49 +20,41 @@ export const makeWorklist = async (req, res) => {
     try {
         // const { patientName, patientID, accessionNumber, parameter, modality, aetitle, sex, birthdate } = req.body;
         const { nama, no_rm, no_order, dokter, pemeriksaan } = req.body;
+        const WORKLIST_DIR = process.env.WORKLISTDIR || path.join(__dirname, "../../worklists");
 
-        pemeriksaan.map((e) => {
-            const data = dataSet(req.body, e.accessionNumber, DicomMetaDictionary, modality, sopInstanceUID, aetitle);
-        });
-
-        // Generate UIDs
-        const sopInstanceUID = DicomMetaDictionary.uid();
-        const sopClassUID = "1.2.840.10008.5.1.4.31"; // MWL SOP Class
-
-        // Dataset untuk worklist
-        const data = dataSet(patientName, patientID, accessionNumber, DicomMetaDictionary);
-
-        // Buat DicomDict dengan meta header yang benar
-        const dicomDict = new DicomDict({});
-
-        // Set meta information
-        dicomDict.meta = DicomMetaDictionary.denaturalizeDataset({
-            FileMetaInformationVersion: new Uint8Array([0, 1]),
-            // MediaStorageSOPClassUID: sopClassUID,
-            MediaStorageSOPClassUID: SOPCLASSUID,
-            MediaStorageSOPInstanceUID: sopInstanceUID,
-            TransferSyntaxUID: "1.2.840.10008.1.2.1", // Explicit VR Little Endian
-            ImplementationClassUID: "1.2.276.0.7230010.3.0.3.6.6",
-            ImplementationVersionName: "DCMJS_WORKLIST",
-        });
-
-        // Set dataset
-        // dicomDict.dict = DicomMetaDictionary.denaturalizeDataset(dataset);
-        dicomDict.dict = DicomMetaDictionary.denaturalizeDataset(data);
-        const buffer = Buffer.from(dicomDict.write());
-        const fileName = `${accessionNumber}.wl`;
-        const WORKLIST_DIR =
-            process.env.WORKLISTDIR || path.join(__dirname, "../../worklists");
-
-        // Pastikan direktori ada
         if (!fs.existsSync(WORKLIST_DIR)) {
             fs.mkdirSync(WORKLIST_DIR, { recursive: true, mode: 0o755 });
         }
 
-        fs.writeFileSync(path.join(WORKLIST_DIR, fileName), buffer, { mode: 0o644 });
-        res
-            .status(200)
-            .json({ status: "success", message: "Worklist generated successfully" });
+        for (const p of pemeriksaan) {
+            // get data modalitas
+            const paramData = await searchParam(p.parameter);
+            if (!paramData) continue;
+
+            // Generate UID & dataset
+            const sopInstanceUID = DicomMetaDictionary.uid();
+            const dataset = dataSet(req.body, e.accessionNumber, DicomMetaDictionary, modality, sopInstanceUID);
+
+            // Generate DICOM
+            const dicomDict = new DicomDict({});
+            dicomDict.meta = DicomMetaDictionary.denaturalizeDataset({
+                FileMetaInformationVersion: new Uint8Array([0, 1]),
+                // MediaStorageSOPClassUID: sopClassUID,
+                MediaStorageSOPClassUID: SOPCLASSUID,
+                MediaStorageSOPInstanceUID: sopInstanceUID,
+                TransferSyntaxUID: "1.2.840.10008.1.2.1", // Explicit VR Little Endian
+                ImplementationClassUID: "1.2.276.0.7230010.3.0.3.6.6",
+                ImplementationVersionName: "DCMJS_WORKLIST",
+            });
+
+            dicomDict.dict = DicomMetaDictionary.denaturalizeDataset(dataset);
+
+            // write file buffer
+            const buffer = Buffer.from(dicomDict.write());
+            const fileName = `${no_rm}-${p.accessionNumber}`;
+            fs.writeFileSync(path.join(WORKLIST_DIR, fileName), buffer, { mode: 0o644 });
+        }
+        res.status(200).json({ status: "success", message: "Worklist generated successfully" });
     } catch (e) {
         console.error("Error generating worklist:", e);
         res
@@ -71,42 +67,41 @@ export const makeWorklist = async (req, res) => {
  * async function
  */
 const searchParam = async (pemeriksaan) => {
-    const data = Parameters.findOne({
+    return Parameters.findOne({
         where: {
             parameter: pemeriksaan
         },
-        includes: [
+        include: [
             {
                 model: Modality,
             }
         ]
     })
-    return data;
 }
 
 /**
  * sync function
  */
-const dataSet = (data, accessionNumber, DicomMetaDictionary, modality, sopInstanceUID, aetitle) => {
+const dataSet = (data, accessionNumber, DicomMetaDictionary, paramData, sopInstanceUID) => {
     return {
         SpecificCharacterSet: "ISO_IR 100",
         PatientName: data.nama.trim(),
         PatientID: data.no_rm.trim(),
         AccessionNumber: accessionNumber.trim(),
-        PatientBirthDate: data.birthdate, // not done
-        PatientSex: data.sex, // not done
-        Modality: modality, // not done
-        SOPClassUID: SOPCLASSUID, // not done
-        SOPInstanceUID: sopInstanceUID, // not done
+        PatientBirthDate: data.birthdate || "",
+        PatientSex: data.sex || "O",
+        Modality: paramData.Modality?.modality || "OT",
+        SOPClassUID: SOPCLASSUID,
+        SOPInstanceUID: sopInstanceUID,
         ScheduledProcedureStepSequence: [
             {
-                ScheduledStationAETitle: aetitle, // not done
-                ScheduledProcedureStepDescription: data.parameter, // not done
-                ScheduledPerformingPhysicianName: data.dokter, // not done
-                ScheduledProcedureStepID: "1".trim(), // not done
+                ScheduledStationAETitle: paramData.Modality?.aetitle || "",
+                ScheduledProcedureStepDescription: paramData.parameter,
+                ScheduledPerformingPhysicianName: data.dokter,
+                ScheduledProcedureStepID: "1",
                 StudyInstanceUID: DicomMetaDictionary.uid(),
                 RequestedProcedureID: accessionNumber.trim(),
-                Modality: modality, // not done
+                Modality: paramData.Modality?.modality || "OT",
                 ScheduledProcedureStepStartDate: new Date()
                     .toISOString()
                     .split("T")[0]
