@@ -83,6 +83,7 @@ const searchParam = async (pemeriksaan) => {
  * sync function
  */
 const dataSet = (data, accessionNumber, DicomMetaDictionary, paramData, sopInstanceUID) => {
+    const mainStudyUID = generateShortUID();
     return {
         SpecificCharacterSet: "ISO_IR 100",
         PatientName: data.nama.trim(),
@@ -92,14 +93,14 @@ const dataSet = (data, accessionNumber, DicomMetaDictionary, paramData, sopInsta
         PatientSex: data.sex || "O",
         Modality: paramData.Modality?.modality || "OT",
         SOPClassUID: SOPCLASSUID,
-        SOPInstanceUID: sopInstanceUID,
+        SOPInstanceUID: mainStudyUID,
         ScheduledProcedureStepSequence: [
             {
                 ScheduledStationAETitle: paramData.Modality?.aetitle || "",
                 ScheduledProcedureStepDescription: paramData.parameter,
                 ScheduledPerformingPhysicianName: data.dokter,
                 ScheduledProcedureStepID: "1",
-                StudyInstanceUID: DicomMetaDictionary.uid(),
+                StudyInstanceUID: mainStudyUID,
                 RequestedProcedureID: accessionNumber.trim(),
                 Modality: paramData.Modality?.modality || "OT",
                 ScheduledProcedureStepStartDate: new Date()
@@ -110,4 +111,10 @@ const dataSet = (data, accessionNumber, DicomMetaDictionary, paramData, sopInsta
             },
         ],
     }
-} 
+}
+
+const generateShortUID = () => {
+    const root = "2.25.";
+    const randomPart = Array.from({ length: 4 }, () => Math.floor(Math.random() * 1000000000)).join('.');
+    return (root + randomPart).substring(0, 64);
+}
